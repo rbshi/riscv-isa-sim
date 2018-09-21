@@ -22,7 +22,7 @@ class lfsr_t
 class cache_sim_t
 {
  public:
-  cache_sim_t(size_t sets, size_t ways, size_t linesz, const char* name);
+  cache_sim_t(size_t sets, size_t ways, size_t linesz, bool flag_dramp, const char* name);
   cache_sim_t(const cache_sim_t& rhs);
   virtual ~cache_sim_t();
 
@@ -47,6 +47,8 @@ class cache_sim_t
   size_t linesz;
   size_t idx_shift;
 
+  bool flag_dramp;
+
   uint64_t* tags;
   
   uint64_t read_accesses;
@@ -65,7 +67,7 @@ class cache_sim_t
 class fa_cache_sim_t : public cache_sim_t
 {
  public:
-  fa_cache_sim_t(size_t ways, size_t linesz, const char* name);
+  fa_cache_sim_t(size_t ways, size_t linesz, bool flag_dramp, const char* name);
   uint64_t* check_tag(uint64_t addr);
   uint64_t victimize(uint64_t addr);
  private:
