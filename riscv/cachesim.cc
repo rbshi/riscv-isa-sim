@@ -127,59 +127,66 @@ uint64_t cache_sim_t::victimize(uint64_t addr)
 
 void cache_sim_t::access(uint64_t addr, size_t bytes, bool store)
 {
-  store ? write_accesses++ : read_accesses++;
-  (store ? bytes_written : bytes_read) += bytes;
 
-  uint64_t* hit_way = check_tag(addr);
+  // exclude the tohost interface address
+  if(addr != 0x80001040){
 
-  if(flag_dramp){
-    if (!store)
-      printf("RD@%lx,SIZE=%ld\n", addr, bytes);
-    else
-      printf("WR@%lx,SIZE=%ld\n", addr, bytes);
-  }
+    store ? write_accesses++ : read_accesses++;
+    (store ? bytes_written : bytes_read) += bytes;
+
+    uint64_t* hit_way = check_tag(addr);
+
+    if(flag_dramp){
+      if (!store)
+        printf("RD@%lx,SIZE=%ld\n", addr, bytes);
+      else
+        printf("WR@%lx,SIZE=%ld\n", addr, bytes);
+    }
 
   // --rbshi
   // if (!store){
   //   printf("CACHE@%lx, SIZE=%ld, STATE=%s \n", addr, bytes, (hit_way != NULL)? "HIT" : "MISS");
   // }
 
-  if (likely(hit_way != NULL))
-  {
-    if (store)
-      *hit_way |= DIRTY;
-    return;
-  }
+    if (likely(hit_way != NULL))
+    {
+      if (store)
+        *hit_way |= DIRTY;
+      return;
+    }
 
-  store ? write_misses++ : read_misses++;
+    store ? write_misses++ : read_misses++;
 
-  uint64_t victim = victimize(addr);
+    uint64_t victim = victimize(addr);
 
   // Dump the DRAM access due to cache miss --rbshi
   // Read miss 
-  if(flag_dramp){
-    if (!store)
-      printf("-------------------RDMISS@%lx,RD@%lx,SIZE=%ld\n", addr, addr-addr%linesz, linesz);
-    else
-      printf("-------------------WRMISS@%lx,RD@%lx,SIZE=%ld\n", addr, addr-addr%linesz, linesz);
+    if(flag_dramp){
+      if (!store)
+        printf("-------------------RDMISS@%lx,RD@%lx,SIZE=%ld\n", addr, addr-addr%linesz, linesz);
+      else
+        printf("-------------------WRMISS@%lx,RD@%lx,SIZE=%ld\n", addr, addr-addr%linesz, linesz);
+    }
+
+    if ((victim & (VALID | DIRTY)) == (VALID | DIRTY))
+    {
+      uint64_t dirty_addr = (victim & ~(VALID | DIRTY)) << idx_shift;
+      if(flag_dramp)
+        printf("-------------------MISS@%lx, WB@%lx, SIZE=%ld\n", addr, dirty_addr, linesz);
+      if (miss_handler)
+        miss_handler->access(dirty_addr, linesz, true);
+      writebacks++;
+    }
+
+    if (miss_handler){
+      miss_handler->access(addr & ~(linesz-1), linesz, false);
+    }
+
+    if (store)
+      *check_tag(addr) |= DIRTY;
+
   }
 
-  if ((victim & (VALID | DIRTY)) == (VALID | DIRTY))
-  {
-    uint64_t dirty_addr = (victim & ~(VALID | DIRTY)) << idx_shift;
-    if(flag_dramp)
-      printf("-------------------MISS@%lx, WB@%lx, SIZE=%ld\n", addr, dirty_addr, linesz);
-    if (miss_handler)
-      miss_handler->access(dirty_addr, linesz, true);
-    writebacks++;
-  }
-
-  if (miss_handler){
-    miss_handler->access(addr & ~(linesz-1), linesz, false);
-  }
-
-  if (store)
-    *check_tag(addr) |= DIRTY;
 }
 
 fa_cache_sim_t::fa_cache_sim_t(size_t ways, size_t linesz, bool flag_dramp, const char* name)
