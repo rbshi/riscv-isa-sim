@@ -1,0 +1,6 @@
+gemv_rocc_subproject_deps = \
+	spike_main \
+	riscv \
+
+gemv_rocc_srcs = \
+	gemv_rocc.cc \
