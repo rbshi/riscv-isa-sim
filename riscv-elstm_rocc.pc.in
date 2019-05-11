@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@prefix@
+libdir=${prefix}/@libdir@
+includedir=${prefix}/@includedir@
+
+Name: riscv-elstm_rocc
+Description: E-LSTM ROCC accelerator
+Version: git
+Libs: -Wl,-rpath,${libdir} -L${libdir} -lelstm_rocc
+Cflags: -I${includedir}
+URL: http://riscv.org/download.html#tab_spike

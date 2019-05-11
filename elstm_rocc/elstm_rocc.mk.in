@@ -1,0 +1,6 @@
+elstm_rocc_subproject_deps = \
+	spike_main \
+	riscv \
+
+elstm_rocc_srcs = \
+	elstm_rocc.cc \

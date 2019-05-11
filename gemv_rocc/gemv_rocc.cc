@@ -1,6 +1,8 @@
 #include "rocc.h"
 #include "mmu.h"
 #include <cstring>
+#include "half.hpp"
+using half_float::half;
 
 class gemv_rocc_t : public rocc_t
 {
@@ -45,6 +47,11 @@ class gemv_rocc_t : public rocc_t
   gemv_rocc_t()
   {
     printf("Construted the GEMV ROCC co-processor.\n");
+    half a(3.4), b(5);
+    half c = a * b;
+    c += 3;
+    if(c > a)
+        std::cout << c << std::endl;
   }
 
  private:
